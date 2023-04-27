@@ -80,7 +80,7 @@ import java.util.concurrent.TimeUnit;
 public class Camera2BasicFragment extends Fragment implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
     /**
-     * 该方法用于将屏幕旋转转换为JPEG方向
+     * 该方法用于将屏幕旋转转换为JPEG方向;
      *
      * 这段代码定义了一个SparseIntArray类型的常量ORIENTATIONS和两个常量REQUEST_CAMERA_PERMISSION和FRAGMENT_DIALOG。
      * SparseIntArray是一个在Android开发中经常使用的类，它可以将整数映射到另一个整数。在这里，它被用来将屏幕旋转角度映射为JPEG图像方向。
@@ -145,15 +145,18 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     private static final int CLOSE_LOCK_TIME = 2500;
 
     /**
-     *
      * 这是一个 TextureView 的监听器，用于监听 TextureView 的 SurfaceTexture 状态变化。
      * 其中包括 SurfaceTexture 可用、尺寸变化、销毁等事件。在这个监听器中，我们根据不同的事件分别执行不同的操作。
      *
+     * SurfaceTexture：
+     * SurfaceTexture是Android系统提供的一个类，用于将外部图像数据（如相机预览数据）与OpenGL ES进行集成。
+     * 它可以将图像数据作为纹理提供给OpenGL ES处理，同时也能够控制图像数据的输出和渲染。
+     * SurfaceTexture还支持对图像数据进行裁剪和缩放，以适应不同的场景需求。
+     * 在Android应用开发中，SurfaceTexture常用于实现相机预览、视频播放等功能。
      */
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
 
-
-        // 在 onSurfaceTextureAvailable() 方法中，当 SurfaceTexture 可用时，我们调用 openCamera() 方法来打开相机并启动预览。
+        // 在 onSurfaceTextureAvailable() 方法中，当 SurfaceTexture 可用时，调用 openCamera() 方法来打开相机并启动预览。
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
             openCamera(width, height);
@@ -186,7 +189,8 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     private String mCameraId;
 
     /**
-     * 用于相机预览的 AutoFitTextureView
+     * 用于相机预览的 AutoFitTextureView.
+     * <p> 非常有意思，如果首次打开这个mTextureView.isAvailable()是false的，但是后台打开就是true
      */
     private AutoFitTextureView mTextureView;
 
@@ -481,7 +485,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
      * @param inflater 用于将布局资源转换为 View 对象的布局填充器。
      * @param container 该 fragment 的父级 View 的容器。
      * @param savedInstanceState 保存了当前 fragment 的先前状态信息的 Bundle 对象。
-     * @return
+     * @return inflate
      */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -509,6 +513,10 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     /**
      *
      * 这是一个 Android Fragment 中的方法，用于在 Activity 创建后完成 Fragment 的启动。
+     * 是一个生命周期方法，它在Fragment的宿主Activity创建完毕时被调用。
+     * 这个方法用于执行一些需要在Fragment视图创建之后才能执行的初始化操作，例如获取控件的引用或者设置控件的监听器等。
+     * 因为在onCreateView方法中，Fragment的视图还没有完全创建出来，所以有些初始化操作需要在onActivityCreated方法中执行。
+     * 一般来说，onActivityCreated方法是在onCreateView方法之后被调用的，因此可以保证视图已经创建出来了，可以安全地对视图上的控件进行操作。
      * 在该方法中，我们可以执行一些初始化工作，例如初始化变量、绑定数据等。
      *
      * 在该方法中，首先调用父类方法 super.onActivityCreated(savedInstanceState)。
@@ -519,7 +527,8 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
      * @param savedInstanceState 保存了当前 fragment 先前状态信息的 Bundle 对象
      *
      *
-     * 过时方法，后续看看怎么替换掉
+     * 过时方法，后续看看怎么替换掉,目前没思绪
+     * <a href="https://blog.csdn.net/Ym_quiet/article/details/121345411">替换思路</a>
      *
      */
     @Override
@@ -548,6 +557,8 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
         super.onResume();
         startBackgroundThread();    // 开启一个后台线程处理相机数据
 
+        Log.d("shilluLog", "onResume: " + mTextureView.isAvailable());
+        // .isAvailable()是一个Java方法，用于检查某个对象或资源是否可用。
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
@@ -566,10 +577,15 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
         super.onPause();
     }
 
+    /**
+     * 请求相机权限
+     * 如果应该显示对相机权限的请求理由，就会弹出一个确认对话框；否则就会请求相机权限。
+     */
     private void requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
             new ConfirmationDialog().show(getChildFragmentManager(), FRAGMENT_DIALOG);
         } else {
+            // 过时方法，后续研究一下
             requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
         }
     }
@@ -594,6 +610,9 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     @SuppressWarnings("SuspiciousNameCombination")
     private void setUpCameraOutputs(int width, int height) {
         Activity activity = getActivity();
+
+        // 这段代码是在Android应用中获取摄像头管理器的实例，用于控制摄像头的打开、关闭、拍照等操作。
+        // activity.getSystemService(Context.CAMERA_SERVICE)获取到一个CameraManager对象，该对象提供了访问摄像头硬件设备的接口。
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
             for (String cameraId : manager.getCameraIdList()) {
@@ -607,16 +626,16 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
                 }
 
                 // 得到该摄像头设备支持的可用流配置，还包括每种格式/尺寸组合的最小帧时长和停顿时长。
-                StreamConfigurationMap map = characteristics.get(
-                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                // StreamConfigurationMap是一个Android Camera2 API中的类，用于获取相机硬件的所有可用配置选项。
+                // 它提供了一组方法，可以获取相机支持的所有输出格式、分辨率、帧率等详细信息。
+                // 通过这些信息，开发人员可以根据自己的需求选择最合适的相机配置来实现各种功能，例如拍照和录像。
+                StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
                     continue;
                 }
 
                 // 对于静态图想捕获，我们使用最大的可用大小
-                Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-                        new CompareSizesByArea());
+                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
 
                 // /*maxImages*/2
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(), ImageFormat.JPEG, 2);
@@ -763,6 +782,13 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
      * 这个 Handler 对象可以用于在后台线程中执行一些需要耗时操作的任务。
      * 通过这种方式，我们可以避免在主线程中执行耗时任务，从而提高应用的响应速度和用户体验。
      *
+     * HandlerThread是一个Android类，它是Thread类的子类，用于在单独的线程中处理消息队列中的消息。
+     * 它具有一个Looper，可以在其中运行一些操作，例如使用Handler发送和接收消息。
+     * 由于它是在单独的线程中运行的，因此可以避免在主线程中执行长时间运行的操作，从而提高应用程序的响应性能。
+     * 通过使用HandlerThread，可以轻松地将某些操作从主线程移动到后台线程。
+     *
+     * Looper是Android中的一个消息循环机制，它可以让我们在一个线程中处理消息队列中的消息，从而实现异步处理任务的功能。
+     *
      */
     private void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("CameraBackground");
@@ -872,10 +898,13 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
      * @param viewHeight mTextureView 高
      */
     private void configureTransform(int viewWidth, int viewHeight) {
+        // 获取当前Fragment所依附的Activity实例。
         Activity activity = getActivity();
         if (null == mTextureView || null == mPreviewSize || null == activity) {
             return;
         }
+        // 获取当前Activity的窗口管理器，然后获取默认的显示屏幕，最后获取当前屏幕的旋转角度。
+        // .getDefaultDisplay() 过时了，后续寻找替换方法
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
