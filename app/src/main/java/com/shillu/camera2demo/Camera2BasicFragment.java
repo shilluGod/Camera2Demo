@@ -61,14 +61,14 @@ import java.util.concurrent.TimeUnit;
 
 /**
  *
- * @Author shillu
- * @Description 定义相机拍照的 fragment
- * @Version 1.0
- *
+ * @author shillu
+ * @version 1.0
+ * @description 定义相机拍照的 fragment
+ * <p>
  * 1.View.OnClickListener  view里面的点击侦听器
  * 用于处理视图点击事件的接口。它用于定义回调方法，在视图被点击时调用该方法。
  * 要使用 View.OnClickListener 接口，需要实现其 onClick() 方法。当用户点击已设置此监听器的视图时，将调用 onClick() 方法。
- *
+ * <p>
  *
  * 2.ActivityCompat.OnRequestPermissionsResultCallback
  * ActivityCompat.OnRequestPermissionsResultCallback 是 Android 中的一个接口，它允许您在权限请求结果可用时接收回调。
@@ -81,7 +81,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
 
     /**
      * 该方法用于将屏幕旋转转换为JPEG方向;
-     *
+     * <p>
      * 这段代码定义了一个SparseIntArray类型的常量ORIENTATIONS和两个常量REQUEST_CAMERA_PERMISSION和FRAGMENT_DIALOG。
      * SparseIntArray是一个在Android开发中经常使用的类，它可以将整数映射到另一个整数。在这里，它被用来将屏幕旋转角度映射为JPEG图像方向。
      * 四个键值分别对应着0度、90度、180度和270度的屏幕旋转角度，对应的值分别为90、0、270和180，这些值分别代表JPEG图像的方向。
@@ -147,7 +147,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     /**
      * 这是一个 TextureView 的监听器，用于监听 TextureView 的 SurfaceTexture 状态变化。
      * 其中包括 SurfaceTexture 可用、尺寸变化、销毁等事件。在这个监听器中，我们根据不同的事件分别执行不同的操作。
-     *
+     * <p>
      * SurfaceTexture：
      * SurfaceTexture是Android系统提供的一个类，用于将外部图像数据（如相机预览数据）与OpenGL ES进行集成。
      * 它可以将图像数据作为纹理提供给OpenGL ES处理，同时也能够控制图像数据的输出和渲染。
@@ -196,6 +196,12 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
 
     /**
      * 用于相机预览的 CameraCaptureSession
+     * <p>
+     * CameraCaptureSession是Android中相机API提供的一个类，它提供了一个与相机设备进行交互的接口，用于管理一系列的预览、拍照或录像等操作。
+     * 在创建CameraCaptureSession对象时，需要通过CameraDevice对象的createCaptureSession()方法来创建，该方法会返回一个CameraCaptureSession实例。
+     * 在创建CameraCaptureSession时，需要指定一个Surface作为预览目标或者拍照的图片保存目标。
+     * 通过CameraCaptureSession对象，我们可以启动预览、拍照、录像等操作，并可以通过设置回调函数来处理相机操作的结果。
+     * 例如，在启动预览之后，我们可以通过setRepeatingRequest()方法来持续输出预览图像，同时可以通过setPreviewCallback()方法设置回调函数，以处理每一帧预览图像的数据。
      */
     private CameraCaptureSession mCaptureSession;
 
@@ -314,7 +320,11 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     private int mState = STATE_PREVIEW;
 
     /**
-     * A {@link Semaphore} to prevent the app from exiting before closing the camera.
+     * 使用Semaphore（信号量）来防止在关闭相机之前应用程序退出。
+     * Semaphore是一个同步辅助类，用于控制线程的并发访问数量。它被设置为1，意味着在任何时候只能有一个线程访问它所控制的资源，即相机的打开和关闭操作。
+     * Semaphore是一种同步机制，它可以用于控制同时访问共享资源的线程数量。
+     * Semaphore用于确保相机在关闭之前被正确释放，以避免内存泄漏和其他问题。
+     *
      */
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
 
@@ -557,7 +567,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
         super.onResume();
         startBackgroundThread();    // 开启一个后台线程处理相机数据
 
-        Log.d("shilluLog", "onResume: " + mTextureView.isAvailable());
+        Log.d(TAG, "onResume: " + mTextureView.isAvailable());
         // .isAvailable()是一个Java方法，用于检查某个对象或资源是否可用。
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
@@ -734,6 +744,10 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
         // 设置矩阵变换，配置预览图的大小、方向、角度
         configureTransform(width, height);
         Activity activity = getActivity();
+
+        // 这段代码是在Android中使用相机的一个管理器，它的作用是获取相机服务，以便在应用程序中使用相机功能。
+        // 其中，activity是当前的Activity对象，而Context.CAMERA_SERVICE是一个常量，表示获取相机服务的类型。
+        // 在获取相机服务之后，可以通过该服务来打开相机、拍照、录制视频等操作。
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
             if (!mCameraOpenCloseLock.tryAcquire(CLOSE_LOCK_TIME, TimeUnit.MILLISECONDS)) {
@@ -749,10 +763,29 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     }
 
     /**
-     * Closes the current {@link CameraDevice}.
+     * 关闭当前 CameraDevice.
+     * <p>
+     * 这段代码定义了一个名为closeCamera()的方法，其目的是关闭相机、图像捕获会话和图像阅读器。
+     * 该方法使用了mCameraOpenCloseLock对象，以确保同一时间只有一个线程可以访问相机资源。
+     * 首先，使用mCameraOpenCloseLock.acquire()方法获得相机资源的锁。
+     * 如果锁已经被另一个线程获得，当前线程将被阻塞，直到锁被释放为止。
+     * 然后，如果mCaptureSession不为null，就调用它的close()方法关闭图像捕获会话，并将它赋值为null。
+     * 同样，如果mCameraDevice不为null，就调用它的close()方法关闭相机，并将它赋值为null。
+     * 如果mImageReader不为null，就调用它的close()方法关闭图像阅读器，并将它赋值为null。
+     * 如果在获取相机资源锁的过程中发生了InterruptedException异常，则使用RuntimeException重新抛出该异常并附带原始异常对象作为参数。
+     * 最后，使用mCameraOpenCloseLock.release()方法释放相机资源的锁，以便其他线程可以访问相机资源。
      */
     private void closeCamera() {
         try {
+
+            /**
+             * 这段代码定义了一个名为acquire()的方法，其目的是获取一个共享锁。
+             * sync是一个Sync对象，可以是ReentrantLock、ReentrantReadWriteLock或Semaphore等。
+             * <p>
+             * acquire()方法使用了sync对象的acquireSharedInterruptibly(int permits)方法，该方法尝试获取给定数量的共享锁。
+             * 如果当前线程被中断，该方法将抛出InterruptedException异常，表示当前线程无法获取锁。
+             * 在抛出异常之前，该方法会释放它已经获取的任何锁，以便其他线程可以获取它们。
+             */
             mCameraOpenCloseLock.acquire();
             if (null != mCaptureSession) {
                 mCaptureSession.close();
@@ -767,8 +800,18 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
                 mImageReader = null;
             }
         } catch (InterruptedException e) {
+            Log.d(TAG, "closeCamera: Interrupted while trying to lock camera closing.");
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
+
+            /**
+             * 这段代码是针对 Android 开发的，它使用了一个名为“mCameraOpenCloseLock”的对象，并调用了该对象的“release()”方法。
+             * 在 Android 中，CameraOpenCloseLock 是一个类，用于控制相机的打开和关闭。
+             * 该方法的作用是释放 CameraOpenCloseLock 对象，以允许其他线程获得相机的访问权限。
+             * 在多线程环境中，当一个线程占用相机资源时，其他线程必须等待，直到该线程释放相机资源后才能获取相机访问权限。
+             * 因此，使用 CameraOpenCloseLock 可以确保在某个线程使用相机时不会被其他线程干扰。
+             * 需要注意的是，在调用该方法之前，应该先使用“acquire()”方法获取相机访问权限，并在使用完相机后再调用“release()”方法释放相机资源，以避免出现竞争条件。
+             */
             mCameraOpenCloseLock.release();
         }
     }
@@ -781,12 +824,12 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
      * 接着，我们使用 getLooper() 方法获取到线程的 Looper 对象，然后通过传入该 Looper 对象来创建一个 Handler 对象，
      * 这个 Handler 对象可以用于在后台线程中执行一些需要耗时操作的任务。
      * 通过这种方式，我们可以避免在主线程中执行耗时任务，从而提高应用的响应速度和用户体验。
-     *
+     * <p>
      * HandlerThread是一个Android类，它是Thread类的子类，用于在单独的线程中处理消息队列中的消息。
      * 它具有一个Looper，可以在其中运行一些操作，例如使用Handler发送和接收消息。
      * 由于它是在单独的线程中运行的，因此可以避免在主线程中执行长时间运行的操作，从而提高应用程序的响应性能。
      * 通过使用HandlerThread，可以轻松地将某些操作从主线程移动到后台线程。
-     *
+     * <p>
      * Looper是Android中的一个消息循环机制，它可以让我们在一个线程中处理消息队列中的消息，从而实现异步处理任务的功能。
      *
      */
@@ -799,7 +842,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     /**
      *
      * 该方法用于停止后台线程，即在 onPause() 方法中被调用，以便释放资源和停止正在进行的任务。
-     *
+     * <p>
      * 首先调用 mBackgroundThread.quitSafely() 方法来请求停止 mBackgroundThread，并在完成当前消息队列中的所有消息后停止该线程。
      * 然后，使用 mBackgroundThread.join() 方法阻止调用线程（通常是主线程）直到后台线程终止。
      * 在等待期间，如果中断发生，则会抛出 InterruptedException。
@@ -886,7 +929,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     /**
      *
      * 这段代码中的 configureTransform 方法是用来配置 TextureView 的变换矩阵，使预览画面能够正确地显示在 TextureView 上。
-     *
+     * <p>
      * 首先，该方法会获取当前设备的旋转角度，然后创建一个 Matrix 对象，用于设置变换矩阵。
      * 接着，它会创建两个 RectF 对象，一个用于表示 TextureView 的区域，一个用于表示预览画面的区域。
      * 然后计算出这两个区域的中心点坐标，并将预览画面的区域进行偏移，使其中心点与 TextureView 的中心点重合。
@@ -926,24 +969,25 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     }
 
     /**
-     * Initiate a still image capture.
+     * 启动静态图像捕获 - 拍照
      */
     private void takePicture() {
         lockFocus();
     }
 
     /**
-     * Lock the focus as the first step for a still image capture.
+     * 将焦点锁定为静态图像捕获的第一步，是指在进行静态图像拍摄之前，首先将相机的焦点锁定在特定的位置上。
+     * 在拍摄照片时，焦点的位置非常重要，因为它决定了照片中哪些元素会被清晰地呈现。
+     * 通过将焦点锁定在特定的位置上，可以确保照片中的重要元素得到清晰的呈现。
+     * 锁定焦点可以通过在相机应用程序中调用相应的API来实现，这通常是拍摄静态图像的第一步。
      */
     private void lockFocus() {
         try {
-            // This is how to tell the camera to lock focus.
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CameraMetadata.CONTROL_AF_TRIGGER_START);
-            // Tell #mCaptureCallback to wait for the lock.
+            // 这是告诉相机锁定焦点的方法
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
+            // 告诉 mCaptureCallback 等待锁定
             mState = STATE_WAITING_LOCK;
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-                    mBackgroundHandler);
+            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -1148,7 +1192,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     }
 
     /**
-     * Shows an error message dialog.
+     * 显示错误消息对话框
      */
     public static class ErrorDialog extends DialogFragment {
 
@@ -1180,7 +1224,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     }
 
     /**
-     * Shows OK/Cancel confirmation dialog about camera permission.
+     * 显示有关相机权限的确定确认对话框
      */
     public static class ConfirmationDialog extends DialogFragment {
 
