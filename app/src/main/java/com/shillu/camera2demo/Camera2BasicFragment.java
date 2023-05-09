@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -516,6 +517,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         view.findViewById(R.id.picture).setOnClickListener(this);
+        view.findViewById(R.id.turn).setOnClickListener(this);
         view.findViewById(R.id.info).setOnClickListener(this);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
     }
@@ -544,7 +546,9 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
+        Date currentDate = new Date();
+        String picName = "pic" + String.valueOf(currentDate);
+        mFile = new File(getActivity().getExternalFilesDir(null), picName + ".jpg");
     }
 
 
@@ -627,13 +631,12 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
         try {
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-
                 // 在这个样例中，我们不使用前置摄像头。
-                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                // Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 // 如果使用前置摄像头，就不处理
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
-                }
+//                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+//                    continue;
+//                }
 
                 // 得到该摄像头设备支持的可用流配置，还包括每种格式/尺寸组合的最小帧时长和停顿时长。
                 // StreamConfigurationMap是一个Android Camera2 API中的类，用于获取相机硬件的所有可用配置选项。
@@ -646,8 +649,6 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
 
                 // 对于静态图想捕获，我们使用最大的可用大小
                 Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
-
-                // /*maxImages*/2
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(), ImageFormat.JPEG, 2);
                 mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
@@ -739,6 +740,7 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
             requestCameraPermission();
             return;
         }
+
         // 设置相机特性，设置图片存储监听，拍照图片有效会通知ImageSaver线程保存图片，设置AE，AF等
         setUpCameraOutputs(width, height);
         // 设置矩阵变换，配置预览图的大小、方向、角度
@@ -976,6 +978,30 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
     }
 
     /**
+     * 切换前后摄
+     */
+    private void fliCamera() {
+        Activity activity = getActivity();
+        CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+        try {
+            for (String cameraId : manager.getCameraIdList()) {
+                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+                CameraCharacteristics mCharacteristics = manager.getCameraCharacteristics(mCameraId);
+                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                Integer mFacing = mCharacteristics.get(CameraCharacteristics.LENS_FACING);
+                if (!facing.equals(mFacing)){
+                    Log.d("shilluLog", "fliCamera");
+                    mCameraId = cameraId;
+
+                    break;
+                }
+            }
+        } catch (CameraAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * 将焦点锁定为静态图像捕获的第一步，是指在进行静态图像拍摄之前，首先将相机的焦点锁定在特定的位置上。
      * 在拍摄照片时，焦点的位置非常重要，因为它决定了照片中哪些元素会被清晰地呈现。
      * 通过将焦点锁定在特定的位置上，可以确保照片中的重要元素得到清晰的呈现。
@@ -1111,7 +1137,24 @@ public class Camera2BasicFragment extends Fragment implements View.OnClickListen
                 takePicture();
                 break;
             }
+            case R.id.turn: {
+                fliCamera();
+                break;
+            }
             case R.id.info: {
+                /**
+                 * 这段代码是在 Android 中创建并显示一个简单的对话框（AlertDialog）。让我们逐行解释它：
+                 *
+                 * new AlertDialog.Builder(activity)：这是创建 AlertDialog.Builder 对象的开始。activity 是一个指向当前活动（Activity）的引用，用于构建对话框。
+                 *
+                 * .setMessage(R.string.intro_message)：通过 setMessage() 方法，我们设置对话框的消息内容。R.string.intro_message 是一个字符串资源的引用，用于获取对话框消息的文本内容。
+                 *
+                 * .setPositiveButton(android.R.string.ok, null)：使用 setPositiveButton() 方法，我们设置对话框的积极按钮。android.R.string.ok 是 Android 框架提供的一个字符串资源，用于表示"确定"按钮的文本内容。null 参数表示当点击按钮时不执行任何操作。
+                 *
+                 * .show()：通过 show() 方法，我们显示创建的对话框。这将在屏幕上显示出来，供用户查看和交互。
+                 *
+                 * 总体而言，这段代码创建了一个具有指定消息和确定按钮的简单对话框，并在当前活动中显示出来。用户可以查看消息内容，并点击确定按钮关闭对话框。
+                 */
                 Activity activity = getActivity();
                 if (null != activity) {
                     new AlertDialog.Builder(activity)
